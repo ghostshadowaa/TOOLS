@@ -65,7 +65,7 @@ def install_allowlist():
     subprocess.run(["apt-get", "install", "-y", *packages], check=False)
 
 
-def discover_private_lan():
+def discover_private_lan(service_scan=False):
     executable = shutil.which("nmap")
     if not executable:
         print("Nmap não está instalado. Use a opção de instalação primeiro.")
@@ -97,19 +97,28 @@ def discover_private_lan():
         print("Verificação cancelada.")
         return
 
-    print(f"\\n[+] Descoberta de hosts em {network} usando Nmap -sn...")
+    if service_scan:
+        args = [executable, "-sT", "-sV", "--top-ports", "100", "-T3", str(network)]
+        description = "inventário TCP dos 100 principais serviços (-sT -sV)"
+        timeout = 180
+    else:
+        args = [executable, "-sn", str(network)]
+        description = "descoberta de hosts (-sn)"
+        timeout = 90
+
+    print(f"\\n[+] Nmap: {description} em {network}...")
     try:
         result = subprocess.run(
-            [executable, "-sn", str(network)],
+            args,
             capture_output=True,
             text=True,
-            timeout=90,
+            timeout=timeout,
             check=False,
         )
-        print((result.stdout or result.stderr or "Nmap não retornou saída.")[:12000])
+        print((result.stdout or result.stderr or "Nmap não retornou saída.")[:16000])
         print("Código de saída:", result.returncode)
     except subprocess.TimeoutExpired:
-        print("A verificação excedeu o limite de 90 segundos.")
+        print(f"A verificação excedeu o limite de {timeout} segundos.")
     except OSError as exc:
         print("Não foi possível iniciar o Nmap:", exc)
 
@@ -124,6 +133,8 @@ def main():
 1 - Detectar ferramentas
 2 - Informações do ambiente
 3 - Instalar ferramentas permitidas
+4 - Descobrir hosts (Nmap, rede privada)
+5 - Inventariar serviços (Nmap, TCP)
 0 - Sair
 """)
         option = input("Escolha: ").strip()
@@ -135,6 +146,8 @@ def main():
             install_allowlist()
         elif option == "4":
             discover_private_lan()
+        elif option == "5":
+            discover_private_lan(service_scan=True)
         elif option == "0":
             break
         else:
