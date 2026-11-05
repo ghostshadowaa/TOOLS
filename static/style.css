@@ -29,7 +29,7 @@ button:hover{filter:brightness(1.12)}button:disabled{opacity:.45;cursor:not-allo
 .results-help{margin-top:16px}.results-help p{margin-top:5px;min-height:0}
 .login{max-width:480px;margin:30px auto}.login h2{margin:5px 0}.login form{display:grid;gap:9px;margin-top:18px}
 .error{color:var(--danger);margin-top:12px}.warning{color:#f1d69b;margin-top:12px;font-size:13px}
-.info-card{min-height:225px}
+.info-card{min-height:225px}.info-card .state{line-height:1.6}
 footer{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);margin-top:32px;padding-top:17px;color:var(--muted);font-size:10px;letter-spacing:.7px}
 @media(max-width:800px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.shell{margin:24px auto}}
 @media(max-width:540px){.grid{grid-template-columns:1fr}.top{align-items:flex-start;padding-top:28px}.brand-mark{width:48px;height:48px;flex-basis:48px}.status{position:absolute;right:0;top:0}.section-head{align-items:flex-start;gap:6px;flex-direction:column}footer{flex-direction:column}.tool-card p{min-height:0}}
