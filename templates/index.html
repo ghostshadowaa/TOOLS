@@ -23,7 +23,7 @@
 
   <section class="notice">
     <strong>Uso responsável e privacidade</strong>
-    <p>Use somente em ativos seus ou com autorização. O painel não pesquisa pessoas por CPF, RG, telefone, e-mail ou nome, não coleta credenciais e não executa comandos de shell recebidos do navegador.</p>
+    <p>Use somente em ativos seus ou com autorização. O painel não pesquisa pessoas por CPF, RG, telefone, e-mail ou nome, não coleta credenciais e não executa comandos de shell recebidos do navegador. A consulta RDAP é opcional e envia o IP público ao serviço rdap.org.</p>
   </section>
 
   {% if not logged_in %}
@@ -41,7 +41,7 @@
   </section>
   {% else %}
   <section class="toolbar">
-    <div><span class="live-dot"></span><span>SESSÃO AUTENTICADA</span><span class="tag">v0.3.0</span></div>
+    <div><span class="live-dot"></span><span>SESSÃO AUTENTICADA</span><span class="tag">v0.3.2</span></div>
     <form method="post" action="/logout">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <button class="ghost" type="submit">Sair</button>
@@ -61,9 +61,10 @@
     </article>
     <article class="tool-card">
       <div class="tool-icon">⌁</div><div class="card-meta">OSINT TÉCNICO</div>
-      <h3>IP Inspector</h3><p>Classifique um IP público ou privado e consulte DNS reverso público quando disponível. Sem geolocalização de pessoas.</p>
+      <h3>IP Inspector</h3><p>Classifique um IP e consulte DNS reverso. A consulta RDAP é opcional e não retorna contatos pessoais.</p>
       <form class="tool-form" data-endpoint="/api/ip">
         <label for="ip-address">Endereço IP</label><input id="ip-address" name="ip" placeholder="1.1.1.1" maxlength="45" required>
+        <label class="check-row"><input type="checkbox" name="rdap" value="true"> Consultar RDAP (envia IP ao rdap.org)</label>
         <button type="submit">Inspecionar IP</button>
       </form><pre class="output" aria-live="polite">Aguardando consulta…</pre>
     </article>
@@ -77,7 +78,7 @@
     </article>
     <article class="tool-card info-card">
       <div class="tool-icon">⌗</div><div class="card-meta">NETWORK / OFFLINE</div>
-      <h3>NetHunter Toolkit</h3><p>Nmap, Metasploit, SQLMap e outras ferramentas instaladas no Kali são detectadas e executadas localmente no NetHunter.</p>
+      <h3>NetHunter Toolkit</h3><p>Nmap, Metasploit, SQLMap e outras ferramentas instaladas no Kali são detectadas localmente no NetHunter.</p>
       <span class="state">MÓDULO OFFLINE</span>
     </article>
     <article class="tool-card info-card">
