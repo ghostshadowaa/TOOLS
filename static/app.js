@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const button = form.querySelector("button[type=submit], button:not([type])");
       const output = form.parentElement.querySelector(".output");
       const payload = Object.fromEntries(new FormData(form).entries());
+      const rdapCheckbox = form.querySelector('input[name="rdap"]');
+      if (rdapCheckbox) payload.rdap = rdapCheckbox.checked;
       const endpoint = form.dataset.endpoint;
 
       if (!endpoint || !output) return;
