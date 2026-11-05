@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Offline inventory and environment checks for Kali NetHunter."""
+import ipaddress
 import os
 import platform
 import shutil
@@ -64,6 +65,55 @@ def install_allowlist():
     subprocess.run(["apt-get", "install", "-y", *packages], check=False)
 
 
+def discover_private_lan():
+    executable = shutil.which("nmap")
+    if not executable:
+        print("Nmap não está instalado. Use a opção de instalação primeiro.")
+        return
+
+    value = input("Rede IPv4 privada em CIDR (ex.: 192.168.1.0/24): ").strip()
+    try:
+        network = ipaddress.ip_network(value, strict=False)
+    except ValueError:
+        print("CIDR inválido.")
+        return
+
+    if (
+        network.version != 4
+        or not network.is_private
+        or network.is_loopback
+        or network.is_link_local
+        or network.is_multicast
+        or network.is_reserved
+        or network.num_addresses > 256
+    ):
+        print("Por segurança, informe uma rede IPv4 privada válida com até 256 endereços.")
+        return
+
+    confirm = input(
+        f"Confirma que a rede {network} é sua ou você tem autorização para verificá-la? [s/N]: "
+    ).strip().lower()
+    if confirm != "s":
+        print("Verificação cancelada.")
+        return
+
+    print(f"\\n[+] Descoberta de hosts em {network} usando Nmap -sn...")
+    try:
+        result = subprocess.run(
+            [executable, "-sn", str(network)],
+            capture_output=True,
+            text=True,
+            timeout=90,
+            check=False,
+        )
+        print((result.stdout or result.stderr or "Nmap não retornou saída.")[:12000])
+        print("Código de saída:", result.returncode)
+    except subprocess.TimeoutExpired:
+        print("A verificação excedeu o limite de 90 segundos.")
+    except OSError as exc:
+        print("Não foi possível iniciar o Nmap:", exc)
+
+
 def main():
     while True:
         print("""
@@ -83,6 +133,8 @@ def main():
             system_info()
         elif option == "3":
             install_allowlist()
+        elif option == "4":
+            discover_private_lan()
         elif option == "0":
             break
         else:
