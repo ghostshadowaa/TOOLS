@@ -1,75 +1,125 @@
 # Shadow Tools
 
-Painel web e toolkit offline para diagnóstico, OSINT de fontes abertas e segurança defensiva.
+**Painel web + toolkit offline para Kali NetHunter.**
 
-> **Status:** scaffold inicial v0.1.0. Os cartões da interface indicam módulos planejados; eles ainda não executam consultas ou varreduras.
+Shadow Tools reúne consultas técnicas de infraestrutura pública, verificações defensivas de sites autorizados e inventário de ferramentas locais. O projeto possui dois modos independentes:
 
-## Modos de uso
+- **Online:** Flask + Gunicorn no Render, acessível pelo navegador.
+- **Offline:** Python dentro do Kali NetHunter, para inventariar ferramentas instaladas no próprio ambiente.
 
-- **Online (Render):** interface Flask acessível pelo navegador. Não é um Kali remoto, não tem root Android e não deve executar comandos arbitrários enviados pelo navegador.
-- **Offline (Kali NetHunter):** edição local planejada para ferramentas que precisam do ambiente Android/Kali, permissões locais ou execução no próprio dispositivo.
+> Render não é Kali remoto, não tem acesso ao Android/Termux e não fornece root do celular.
 
-A ideia é compartilhar módulos Python seguros quando possível, mantendo adaptadores diferentes para web e terminal.
+## Recursos disponíveis
 
-## Estrutura atual
+### Painel online
+
+- Login por token configurado no ambiente.
+- Proteção CSRF, cookies HttpOnly/SameSite e cabeçalhos de segurança.
+- Limites de consultas por IP.
+- Consulta DNS de registros A, AAAA, MX, NS e TXT.
+- Inspeção de IP: classificação técnica, DNS reverso e dados de alocação RDAP para IPs públicos.
+- Verificação HTTPS/TLS e cabeçalhos de segurança em domínios públicos autorizados.
+- Endpoint de saúde em /health.
+- Sem histórico persistente das consultas nesta versão.
+
+### NetHunter offline
+
+- Inventário de Nmap, Metasploit, SQLMap, Whois, Dig, cURL, Wget, TCPDump, Traceroute, IP, SS, Git e Python.
+- Informações do ambiente e UID efetivo.
+- Instalação explícita de uma lista permitida de ferramentas de diagnóstico.
+- Metasploit e SQLMap são detectados se já estiverem instalados; não são instalados ou iniciados automaticamente.
+
+## Estrutura
 
 ```text
 TOOLS/
 ├── app.py
+├── core/                 # validação e verificações seguras
+├── shadowtools/          # consultas técnicas e validação
+├── offline.py            # menu local e instalador
+├── offline/
+│   ├── main.py
+│   └── tool_registry.py
+├── templates/
+├── static/
+├── tests/
+├── install.sh
 ├── requirements.txt
 ├── render.yaml
-├── templates/
-│   └── index.html
-├── static/
-│   └── style.css
+├── AGENTS.md
 └── README.md
 ```
 
-## Executar localmente
+## Instalação no Kali NetHunter
 
-Requer Python 3.10 ou superior.
+Clone o repositório dentro do Kali:
 
 ```bash
-python -m venv .venv
+git clone https://github.com/ghostshadowaa/TOOLS.git
+cd TOOLS
+bash install.sh
+python3 offline.py
+```
+
+O menu offline permite detectar ferramentas e instalar a lista permitida de ferramentas de diagnóstico. Se o APT informar falta de permissões, entre como usuário root do container NetHunter (por exemplo, nethunter -r no Termux host) e execute o instalador novamente. **Isso não concede root real ao Android:** root no PRoot é limitado ao container.
+
+Menu alternativo de inventário:
+
+```bash
+python3 offline/main.py
+```
+
+## Executar o painel localmente
+
+Requer Python 3.10+.
+
+```bash
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+export APP_SECRET_KEY="troque-por-um-segredo-longo"
+export DASHBOARD_TOKEN="defina-um-token-forte"
+export COOKIE_SECURE=0
 python app.py
 ```
 
-Abra `http://127.0.0.1:5000`.
-
-No Windows, ative o ambiente virtual com `.venv\\Scripts\\activate`.
+Abra http://127.0.0.1:5000.
 
 ## Deploy no Render
 
-O repositório inclui `render.yaml`. No Render, crie um Blueprint e conecte este repositório. A configuração usa:
+1. Crie um Blueprint no Render e conecte este repositório.
+2. O render.yaml configura build, Gunicorn, variáveis secretas e /health.
+3. Copie o valor de DASHBOARD_TOKEN das Environment Variables do serviço para entrar no painel.
+4. Mantenha APP_SECRET_KEY e DASHBOARD_TOKEN privados. Nunca os coloque no código ou no GitHub.
+5. A configuração de produção ativa cookies Secure.
 
-- Build: `pip install -r requirements.txt`
-- Start: `gunicorn app:app`
-- Health check: `/health`
+O serviço gratuito pode suspender-se após inatividade. O disco padrão é efêmero; não use arquivos locais para guardar histórico ou dados importantes. Ainda não há banco de dados configurado.
 
-O serviço gratuito pode dormir após inatividade. O filesystem padrão do serviço é temporário; quando histórico/configurações forem implementados, usar banco de dados em vez de depender de arquivos locais.
+## API autenticada
 
-## Módulos planejados
+Todas as rotas exigem login, sessão e token CSRF:
 
-- DNS e informações técnicas de domínios administrados pelo usuário.
-- Metadados técnicos de IPs públicos.
-- Verificação de cabeçalhos HTTP e TLS em sites autorizados.
-- Diagnóstico local de rede no NetHunter.
-- Inventário de ferramentas disponíveis no ambiente local.
+- POST /api/dns — JSON: {"domain":"example.com"}
+- POST /api/ip — JSON: {"ip":"1.1.1.1"}
+- POST /api/web-check — JSON: {"domain":"example.com"}
 
-## Privacidade e uso responsável
+## Privacidade e limites
 
-- Não pesquisar, localizar, expor ou montar dossiês sobre pessoas por CPF, RG, telefone, endereço ou outros identificadores pessoais.
-- Não coletar credenciais, dados privados ou informações obtidas por acesso não autorizado.
-- Não enviar entradas do usuário a serviços externos sem informar claramente o destino e obter consentimento.
-- Testes de rede e web devem ficar limitados a sistemas próprios ou com autorização explícita.
-- A interface hospedada não deve aceitar comandos de shell arbitrários, execução remota de ferramentas ou elevação de privilégios.
+- Consultas RDAP enviam o IP público consultado ao serviço rdap.org. Contatos e dados pessoais não são incluídos no resultado.
+- DNS usa o resolvedor configurado no ambiente servidor.
+- A verificação web conecta somente a IPs públicos validados, usa HTTPS na porta 443 e não segue redirecionamentos.
+- Não há busca de pessoas por CPF, RG, telefone, endereço, nome, e-mail ou username; não há dossiês pessoais, busca de credenciais ou enumeração de contas.
+- Verifique somente sistemas próprios ou com autorização explícita.
+- O painel web não executa comandos de shell nem ferramentas locais do NetHunter.
+- Entradas não são gravadas em histórico nesta versão.
 
-## Desenvolvimento
+## Testes
 
-A versão atual fornece somente o dashboard e o endpoint de saúde. Novos módulos devem ser implementados e testados antes de serem apresentados como funcionais.
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+```
 
 ## Licença
 
-Ainda não definida.
+MIT. Consulte LICENSE.
