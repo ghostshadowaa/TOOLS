@@ -6,69 +6,89 @@
   <meta name="theme-color" content="#10131b">
   <title>Shadow Tools</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
 <body>
-  <main class="shell">
-    <header class="top">
-      <div class="brand-mark">S</div>
-      <div>
-        <p class="eyebrow">GHOSTSHADOWAA / SECURITY TOOLKIT</p>
-        <h1>Shadow <span>Tools</span></h1>
-        <p class="muted">Painel de OSINT público, diagnóstico e segurança defensiva.</p>
-      </div>
-      <div class="status"><i></i> ONLINE</div>
-    </header>
+<main class="shell">
+  <header class="top">
+    <div class="brand-mark">S</div>
+    <div class="brand-copy">
+      <p class="eyebrow">GHOSTSHADOWAA / SECURITY TOOLKIT</p>
+      <h1>Shadow <span>Tools</span></h1>
+      <p class="muted">OSINT técnico, diagnóstico de rede e segurança defensiva.</p>
+    </div>
+    <div class="status"><i></i> WEB PANEL</div>
+  </header>
 
-    <section class="notice">
-      <strong>Uso responsável</strong>
-      <p>Use as ferramentas somente em sistemas próprios, com autorização, e para consultar informações públicas sem expor dados pessoais de terceiros.</p>
-    </section>
+  <section class="notice">
+    <strong>Uso responsável e privacidade</strong>
+    <p>Use somente em ativos seus ou com autorização. O painel não pesquisa pessoas por CPF, RG, telefone, e-mail ou nome, não coleta credenciais e não executa comandos de shell recebidos do navegador.</p>
+  </section>
 
-    <section class="section-head">
-      <div><p class="eyebrow">WORKSPACE</p><h2>Central de ferramentas</h2></div>
-      <span class="tag">v0.1.0 · inicial</span>
-    </section>
+  {% if not logged_in %}
+  <section class="login panel">
+    <div><p class="eyebrow">ACESSO PROTEGIDO</p><h2>Entrar no painel</h2>
+    <p class="muted">Configure o token DASHBOARD_TOKEN nas variáveis de ambiente do Render.</p></div>
+    {% if login_error %}<p class="error">{{ login_error }}</p>{% endif %}
+    {% if not login_configured %}<p class="warning">O acesso está bloqueado até configurar DASHBOARD_TOKEN.</p>{% endif %}
+    <form method="post" action="/login">
+      <label for="token">Token do painel</label>
+      <input id="token" name="token" type="password" autocomplete="current-password" required>
+      <button type="submit" {% if not login_configured %}disabled{% endif %}>Entrar</button>
+    </form>
+  </section>
+  {% else %}
+  <section class="toolbar">
+    <div><span class="live-dot"></span><span>SESSÃO AUTENTICADA</span><span class="tag">v0.2.0</span></div>
+    <form method="post" action="/logout"><button class="ghost" type="submit">Sair</button></form>
+  </section>
 
-    <section class="grid">
-      <article class="tool-card">
-        <div class="tool-icon">◎</div><div class="card-meta">OSINT</div>
-        <h3>Domínio e DNS</h3>
-        <p>Planejado: consultar registros DNS públicos de domínios que você administra.</p>
-        <span class="state">EM DESENVOLVIMENTO</span>
-      </article>
-      <article class="tool-card">
-        <div class="tool-icon">⌁</div><div class="card-meta">OSINT</div>
-        <h3>IP público</h3>
-        <p>Planejado: consultar informações técnicas e de rede de endereços IP públicos.</p>
-        <span class="state">EM DESENVOLVIMENTO</span>
-      </article>
-      <article class="tool-card">
-        <div class="tool-icon">⌘</div><div class="card-meta">WEB SECURITY</div>
-        <h3>Headers e TLS</h3>
-        <p>Planejado: revisar cabeçalhos HTTP e validade de certificados em sites autorizados.</p>
-        <span class="state">EM DESENVOLVIMENTO</span>
-      </article>
-      <article class="tool-card">
-        <div class="tool-icon">⌗</div><div class="card-meta">NETWORK</div>
-        <h3>Diagnóstico de rede</h3>
-        <p>Ferramentas de diagnóstico serão executadas localmente no NetHunter.</p>
-        <span class="state">VERSÃO OFFLINE</span>
-      </article>
-      <article class="tool-card">
-        <div class="tool-icon">▣</div><div class="card-meta">SYSTEM</div>
-        <h3>Ambiente</h3>
-        <p>O painel web não possui root Android nem acesso ao seu celular.</p>
-        <span class="state">INFORMAÇÃO</span>
-      </article>
-      <article class="tool-card">
-        <div class="tool-icon">↗</div><div class="card-meta">PRIVACIDADE</div>
-        <h3>Dados pessoais</h3>
-        <p>Não fazemos busca de pessoas por CPF, RG, telefone ou endereço nem montamos dossiês pessoais.</p>
-        <span class="state">PRIVACIDADE EM PRIMEIRO LUGAR</span>
-      </article>
-    </section>
+  <section class="section-head"><div><p class="eyebrow">WORKSPACE</p><h2>Central de ferramentas</h2></div><span class="tag">Consultas sob demanda</span></section>
 
-    <footer><span>SHADOW TOOLS</span><span>Online dashboard · NetHunter offline edition</span></footer>
-  </main>
+  <section class="grid">
+    <article class="tool-card">
+      <div class="tool-icon">◎</div><div class="card-meta">OSINT TÉCNICO</div>
+      <h3>DNS Lookup</h3><p>Consulte registros públicos A, AAAA, MX, NS e TXT de um domínio.</p>
+      <form class="tool-form" data-endpoint="/api/dns">
+        <label>Domínio</label><input name="domain" placeholder="example.com" required>
+        <button>Consultar DNS</button>
+      </form><pre class="output" aria-live="polite">Aguardando consulta…</pre>
+    </article>
+    <article class="tool-card">
+      <div class="tool-icon">⌁</div><div class="card-meta">OSINT TÉCNICO</div>
+      <h3>IP Inspector</h3><p>Classifique um IP, verifique se é público e consulte seu DNS reverso quando disponível. Sem geolocalização de pessoas.</p>
+      <form class="tool-form" data-endpoint="/api/ip">
+        <label>Endereço IP</label><input name="ip" placeholder="1.1.1.1" required>
+        <button>Inspecionar IP</button>
+      </form><pre class="output" aria-live="polite">Aguardando consulta…</pre>
+    </article>
+    <article class="tool-card">
+      <div class="tool-icon">⌘</div><div class="card-meta">WEB SECURITY</div>
+      <h3>HTTP / TLS Check</h3><p>Verifique cabeçalhos HTTP e certificado TLS de um domínio público autorizado. Não segue redirecionamentos.</p>
+      <form class="tool-form" data-endpoint="/api/web-check">
+        <label>Domínio autorizado</label><input name="domain" placeholder="seusite.com" required>
+        <button>Verificar site</button>
+      </form><pre class="output" aria-live="polite">Aguardando consulta…</pre>
+    </article>
+    <article class="tool-card info-card">
+      <div class="tool-icon">⌗</div><div class="card-meta">NETWORK / OFFLINE</div>
+      <h3>NetHunter Toolkit</h3><p>Nmap, Metasploit, SQLMap e demais ferramentas instaladas no Kali devem ser executadas localmente no NetHunter.</p>
+      <span class="state">MÓDULO OFFLINE</span>
+    </article>
+    <article class="tool-card info-card">
+      <div class="tool-icon">▣</div><div class="card-meta">SYSTEM</div>
+      <h3>Ambiente</h3><p>O Render não tem acesso ao Android, armazenamento do celular, Termux ou root. A versão local será independente.</p>
+      <span class="state">ONLINE / OFFLINE SEPARADOS</span>
+    </article>
+    <article class="tool-card info-card">
+      <div class="tool-icon">↗</div><div class="card-meta">PRIVACIDADE</div>
+      <h3>Dados pessoais</h3><p>Sem dossiês por CPF, RG, telefone, nome ou e-mail. Verificações de e-mail serão limitadas a domínios e configurações técnicas, sem confirmar contas.</p>
+      <span class="state">PRIVACIDADE EM PRIMEIRO LUGAR</span>
+    </article>
+  </section>
+  <section class="results-help"><strong>Sobre os resultados</strong><p>Consultas DNS usam o resolvedor configurado no servidor. A verificação web conecta somente a endereços IP públicos e não segue redirecionamentos. As entradas não são gravadas em histórico nesta versão.</p></section>
+  {% endif %}
+  <footer><span>SHADOW TOOLS</span><span>Online dashboard · NetHunter local edition</span></footer>
+</main>
 </body>
 </html>
