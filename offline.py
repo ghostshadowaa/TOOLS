@@ -56,6 +56,10 @@ def install_allowlist():
     if not shutil.which("apt-get"):
         print("apt-get não encontrado. Execute este script dentro do Kali NetHunter.")
         return
+    if hasattr(os, "geteuid") and os.geteuid() != 0:
+        print("Permissão insuficiente. Entre como root do container NetHunter e tente novamente.")
+        print("Isso não concede root real ao Android.")
+        return
     subprocess.run(["apt-get", "update"], check=False)
     subprocess.run(["apt-get", "install", "-y", *packages], check=False)
 
