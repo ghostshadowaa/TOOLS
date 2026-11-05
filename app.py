@@ -10,13 +10,14 @@ from flask_limiter.util import get_remote_address
 from core.dns_tools import lookup_dns
 from core.ip_tools import inspect_ip
 from core.web_checks import inspect_web
+from shadowtools.lookups import ip_rdap
 
 app = Flask(__name__)
 app.config.update(
     SECRET_KEY=os.environ.get("APP_SECRET_KEY") or secrets.token_hex(32),
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "1") == "1",
+    SESSION_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "0") == "1",
     MAX_CONTENT_LENGTH=16 * 1024,
 )
 
@@ -56,12 +57,12 @@ def authenticated(view):
     return wrapped
 
 
-def read_string(data, key, label):
+def read_string(data, key, label, max_length=253):
     value = data.get(key) if isinstance(data, dict) else None
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"Informe {label}.")
     value = value.strip()
-    if len(value) > 253:
+    if len(value) > max_length:
         raise ValueError("Entrada muito longa.")
     return value
 
@@ -91,7 +92,7 @@ def index():
 
 @app.get("/health")
 def health():
-    return jsonify({"status": "ok", "app": "Shadow Tools", "version": "0.3.0"})
+    return jsonify({"status": "ok", "app": "Shadow Tools", "version": "0.3.1"})
 
 
 @app.post("/login")
@@ -108,9 +109,9 @@ def login():
     if hmac.compare_digest(supplied, expected):
         session.clear()
         session["authenticated"] = True
-        token = csrf_value()
         return render_template(
-            "index.html", logged_in=True, login_configured=True, csrf_token=token
+            "index.html", logged_in=True, login_configured=True,
+            csrf_token=csrf_value(),
         )
     return render_template(
         "index.html", logged_in=False, login_configured=True,
@@ -150,8 +151,11 @@ def api_dns():
 def api_ip():
     data = request.get_json(silent=True) or {}
     try:
-        address = read_string(data, "ip", "um endereço IP")
-        return jsonify({"ok": True, "result": inspect_ip(address)})
+        address = read_string(data, "ip", "um endereço IP", max_length=45)
+        result = inspect_ip(address)
+        if result["global"]:
+            result["rdap"] = ip_rdap(address)
+        return jsonify({"ok": True, "result": result})
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
     except Exception:
