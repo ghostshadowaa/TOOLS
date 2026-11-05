@@ -92,7 +92,7 @@ def index():
 
 @app.get("/health")
 def health():
-    return jsonify({"status": "ok", "app": "Shadow Tools", "version": "0.3.1"})
+    return jsonify({"status": "ok", "app": "Shadow Tools", "version": "0.3.2"})
 
 
 @app.post("/login")
@@ -153,8 +153,10 @@ def api_ip():
     try:
         address = read_string(data, "ip", "um endereço IP", max_length=45)
         result = inspect_ip(address)
-        if result["global"]:
+        if result["global"] and data.get("rdap") is True:
             result["rdap"] = ip_rdap(address)
+        else:
+            result["rdap"] = "Não consultado (opcional)."
         return jsonify({"ok": True, "result": result})
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
