@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#10131b">
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <title>Shadow Tools</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="{{ url_for('static', filename='app.js') }}" defer></script>
@@ -28,10 +29,11 @@
   {% if not logged_in %}
   <section class="login panel">
     <div><p class="eyebrow">ACESSO PROTEGIDO</p><h2>Entrar no painel</h2>
-    <p class="muted">Configure o token DASHBOARD_TOKEN nas variáveis de ambiente do Render.</p></div>
+    <p class="muted">Configure DASHBOARD_TOKEN nas variáveis de ambiente do Render.</p></div>
     {% if login_error %}<p class="error">{{ login_error }}</p>{% endif %}
     {% if not login_configured %}<p class="warning">O acesso está bloqueado até configurar DASHBOARD_TOKEN.</p>{% endif %}
     <form method="post" action="/login">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <label for="token">Token do painel</label>
       <input id="token" name="token" type="password" autocomplete="current-password" required>
       <button type="submit" {% if not login_configured %}disabled{% endif %}>Entrar</button>
@@ -39,8 +41,11 @@
   </section>
   {% else %}
   <section class="toolbar">
-    <div><span class="live-dot"></span><span>SESSÃO AUTENTICADA</span><span class="tag">v0.2.0</span></div>
-    <form method="post" action="/logout"><button class="ghost" type="submit">Sair</button></form>
+    <div><span class="live-dot"></span><span>SESSÃO AUTENTICADA</span><span class="tag">v0.3.0</span></div>
+    <form method="post" action="/logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="ghost" type="submit">Sair</button>
+    </form>
   </section>
 
   <section class="section-head"><div><p class="eyebrow">WORKSPACE</p><h2>Central de ferramentas</h2></div><span class="tag">Consultas sob demanda</span></section>
@@ -48,45 +53,45 @@
   <section class="grid">
     <article class="tool-card">
       <div class="tool-icon">◎</div><div class="card-meta">OSINT TÉCNICO</div>
-      <h3>DNS Lookup</h3><p>Consulte registros públicos A, AAAA, MX, NS e TXT de um domínio.</p>
+      <h3>DNS Lookup</h3><p>Consulte registros públicos A, AAAA, MX, NS, TXT e CAA de um domínio.</p>
       <form class="tool-form" data-endpoint="/api/dns">
-        <label>Domínio</label><input name="domain" placeholder="example.com" required>
-        <button>Consultar DNS</button>
+        <label for="dns-domain">Domínio</label><input id="dns-domain" name="domain" placeholder="example.com" maxlength="253" required>
+        <button type="submit">Consultar DNS</button>
       </form><pre class="output" aria-live="polite">Aguardando consulta…</pre>
     </article>
     <article class="tool-card">
       <div class="tool-icon">⌁</div><div class="card-meta">OSINT TÉCNICO</div>
-      <h3>IP Inspector</h3><p>Classifique um IP, verifique se é público e consulte seu DNS reverso quando disponível. Sem geolocalização de pessoas.</p>
+      <h3>IP Inspector</h3><p>Classifique um IP público ou privado e consulte DNS reverso público quando disponível. Sem geolocalização de pessoas.</p>
       <form class="tool-form" data-endpoint="/api/ip">
-        <label>Endereço IP</label><input name="ip" placeholder="1.1.1.1" required>
-        <button>Inspecionar IP</button>
+        <label for="ip-address">Endereço IP</label><input id="ip-address" name="ip" placeholder="1.1.1.1" maxlength="45" required>
+        <button type="submit">Inspecionar IP</button>
       </form><pre class="output" aria-live="polite">Aguardando consulta…</pre>
     </article>
     <article class="tool-card">
       <div class="tool-icon">⌘</div><div class="card-meta">WEB SECURITY</div>
       <h3>HTTP / TLS Check</h3><p>Verifique cabeçalhos HTTP e certificado TLS de um domínio público autorizado. Não segue redirecionamentos.</p>
       <form class="tool-form" data-endpoint="/api/web-check">
-        <label>Domínio autorizado</label><input name="domain" placeholder="seusite.com" required>
-        <button>Verificar site</button>
+        <label for="web-domain">Domínio autorizado</label><input id="web-domain" name="domain" placeholder="seusite.com" maxlength="253" required>
+        <button type="submit">Verificar site</button>
       </form><pre class="output" aria-live="polite">Aguardando consulta…</pre>
     </article>
     <article class="tool-card info-card">
       <div class="tool-icon">⌗</div><div class="card-meta">NETWORK / OFFLINE</div>
-      <h3>NetHunter Toolkit</h3><p>Nmap, Metasploit, SQLMap e demais ferramentas instaladas no Kali devem ser executadas localmente no NetHunter.</p>
+      <h3>NetHunter Toolkit</h3><p>Nmap, Metasploit, SQLMap e outras ferramentas instaladas no Kali são detectadas e executadas localmente no NetHunter.</p>
       <span class="state">MÓDULO OFFLINE</span>
     </article>
     <article class="tool-card info-card">
       <div class="tool-icon">▣</div><div class="card-meta">SYSTEM</div>
-      <h3>Ambiente</h3><p>O Render não tem acesso ao Android, armazenamento do celular, Termux ou root. A versão local será independente.</p>
+      <h3>Ambiente</h3><p>O Render não tem acesso ao Android, armazenamento do celular, Termux ou root. A versão local é independente.</p>
       <span class="state">ONLINE / OFFLINE SEPARADOS</span>
     </article>
     <article class="tool-card info-card">
       <div class="tool-icon">↗</div><div class="card-meta">PRIVACIDADE</div>
-      <h3>Dados pessoais</h3><p>Sem dossiês por CPF, RG, telefone, nome ou e-mail. Verificações de e-mail serão limitadas a domínios e configurações técnicas, sem confirmar contas.</p>
+      <h3>Dados pessoais</h3><p>Sem dossiês por CPF, RG, telefone, nome ou e-mail. Consultas são limitadas a infraestrutura técnica pública.</p>
       <span class="state">PRIVACIDADE EM PRIMEIRO LUGAR</span>
     </article>
   </section>
-  <section class="results-help"><strong>Sobre os resultados</strong><p>Consultas DNS usam o resolvedor configurado no servidor. A verificação web conecta somente a endereços IP públicos e não segue redirecionamentos. As entradas não são gravadas em histórico nesta versão.</p></section>
+  <section class="results-help"><strong>Sobre os resultados</strong><p>DNS usa o resolvedor configurado no servidor. A verificação web conecta somente a endereços IP públicos e não segue redirecionamentos. As entradas não são gravadas em histórico nesta versão. As consultas têm limites por IP.</p></section>
   {% endif %}
   <footer><span>SHADOW TOOLS</span><span>Online dashboard · NetHunter local edition</span></footer>
 </main>
