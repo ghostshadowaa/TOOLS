@@ -8,6 +8,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from core.dns_tools import lookup_dns
+from core.email_security import inspect_email_domain
 from core.ip_tools import inspect_ip
 from core.web_checks import inspect_web
 from shadowtools.lookups import ip_rdap
@@ -153,7 +154,7 @@ def api_ip():
     try:
         address = read_string(data, "ip", "um endereço IP", max_length=45)
         result = inspect_ip(address)
-        if result["global"] and data.get("rdap") is True:
+        if result["global"] and data.get("rdap") in (True, "true", "on", "1"):
             result["rdap"] = ip_rdap(address)
         else:
             result["rdap"] = "Não consultado (opcional)."
