@@ -106,7 +106,7 @@ def discover_private_lan(service_scan=False):
         description = "descoberta de hosts (-sn)"
         timeout = 90
 
-    print(f"\\n[+] Nmap: {description} em {network}...")
+    print(f"\n[+] Nmap: {description} em {network}...")
     try:
         result = subprocess.run(
             args,
