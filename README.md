@@ -20,6 +20,7 @@ Shadow Tools reúne consultas técnicas de infraestrutura pública, verificaçõ
 - IP Inspector: classificação técnica, DNS reverso e, opcionalmente, dados de alocação RDAP.
 - HTTP/TLS: certificado HTTPS e cabeçalhos de segurança em domínios públicos autorizados.
 - Verificação de endereços públicos antes de conectar; sem seguir redirecionamentos.
+- A página separa consultas web das ferramentas disponíveis somente no NetHunter local.
 - Endpoint de saúde em `/health`.
 - Sem histórico persistente nesta versão.
 
@@ -29,6 +30,7 @@ Shadow Tools reúne consultas técnicas de infraestrutura pública, verificaçõ
 - Informações do ambiente e UID efetivo.
 - Instalação explícita de uma lista permitida de ferramentas de diagnóstico.
 - Metasploit e SQLMap são detectados se já estiverem instalados; não são instalados nem iniciados automaticamente.
+- Nmap oferece descoberta de hosts e inventário TCP com detecção de versões dos 100 principais serviços, limitado a redes IPv4 privadas de até 256 endereços e com confirmação de autorização.
 
 ## Estrutura
 
@@ -73,6 +75,8 @@ Para abrir diretamente o inventário por categorias:
 ```bash
 python3 offline/main.py
 ```
+
+O menu inclui descoberta de hosts e inventário TCP de serviços do Nmap. Ambos exigem rede IPv4 privada de até 256 endereços e confirmação de autorização; o inventário de serviços usa detecção de versão nos 100 principais serviços TCP. Não executa scripts NSE de vulnerabilidade.
 
 O menu de instalação usa APT e pede confirmação antes de instalar a lista permitida. Se o APT informar falta de permissões, entre como root do ambiente NetHunter e execute novamente. **Root dentro do PRoot não equivale a root real do Android.**
 
